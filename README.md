@@ -29,3 +29,65 @@ ros2_ws/
             ├── amr_init.sh                 # AMR 硬體與雷達初始化腳本[cite: 7]
             └── agv_init.sh                 # AGV 巡線感測器初始化腳本[cite: 6]
 ```
+
+## 檔案職責說明
+
+| 檔案名稱 | 職責與說明 |
+| :--- | :--- |
+| **`colcon.mixin`** | 定義 `--mixin AMR_Project` 與 `--mixin AGV_Project`，指定要建置的 Package 清單。 |
+| **`colcon.amr.meta`** | 設定 `deploy_manager` 的 CMake 參數：`-DDEPLOY_PROJECT_NAME=AMR_Project`、`-DROS_DOMAIN_ID=10`、`-DTARGET_SCRIPT=amr_init.sh`[cite: 2]。 |
+| **`colcon.agv.meta`** | 設定 `deploy_manager` 的 CMake 參數：`-DDEPLOY_PROJECT_NAME=AGV_Project`、`-DROS_DOMAIN_ID=20`、`-DTARGET_SCRIPT=agv_init.sh`[cite: 1]。 |
+| **`CMakeLists.txt`** | 接收 Meta 帶入的參數，使用 `configure_file` 注入 `project_hook.sh.in` 並註冊為 ROS 2 載入點[cite: 4]。 |
+| **`project_hook.sh.in`** | Shell Hook 範本，當環境被 `source` 時自動設定 `ROS_DOMAIN_ID` 並執行目標腳本。 |
+
+---
+
+## CLI 操作指南
+
+### 1. 切換與建置 AMR 專案 (自主移動機器人)
+
+只會編譯 `pkg_amr_nav` 與 `deploy_manager`[cite: 3]：
+
+```bash
+# 1. 執行建置 (指定 AMR Mixin 與 AMR Meta)
+colcon build --mixin-files colcon.mixin --mixin AMR_Project --metas colcon.amr.meta --cmake-force-configure[cite: 2, 3]
+
+# 2. 載入環境變數 (自動觸發 amr_init.sh)
+source install/setup.bash[cite: 8]
+
+# 3. 驗證環境變數
+echo $ROS_DOMAIN_ID
+# 預期輸出: 10
+```
+
+### 2. 切換與建置 AGV 專案 (無人搬運車)
+
+只會編譯 pkg_agv_line 與 deploy_manager[cite: 3]：
+
+```bash
+# 1. 清理舊環境
+rm -rf build/ install/ log/
+
+# 2. 執行建置 (指定 AGV Mixin 與 AGV Meta)
+colcon build --mixin-files colcon.mixin --mixin AGV_Project --metas colcon.agv.meta --cmake-force-configure[cite: 1, 3]
+
+# 3. 載入環境變數 (自動觸發 agv_init.sh)
+source install/setup.bash[cite: 8]
+
+# 4. 驗證環境變數
+echo $ROS_DOMAIN_ID
+# 預期輸出: 20
+```
+### 載入環境輸出範例
+
+當執行 source install/setup.bash 時，Terminal 會自動印出目前專案資訊並執行對應初始化動作[cite: 8]：
+
+```text
+==================================================
+[Active Project] Name           : AMR_Project
+[Active Project] ROS_DOMAIN_ID  : 10
+[Active Project] Running Script : amr_init.sh
+--------------------------------------------------
+[SH Execution] Initializing AMR hardware & Lidar...
+--------------------------------------------------
+```
