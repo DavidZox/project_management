@@ -103,3 +103,42 @@ sudo apt-get install -y python3-colcon-mixin
 # 2. (選擇性) 初始化 colcon-mixin 預設庫
 colcon mixin add default [https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml](https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml) 2>/dev/null || true
 colcon mixin update
+```
+
+# 一鍵式自動建置與環境載入腳本 (`build.sh`)
+
+利用純 Bash 選單（`select`）寫成的輕量化自動化腳本，無需安裝任何額外的 Python 套件（如 PyYAML），即可自動解析專案並完成建置。
+
+透過 `source` 方式執行，能在 **建置完成後自動無縫套用 `setup.bash` 的環境變數** 至當前的 Terminal 中。
+
+---
+
+## 1. 使用方式
+
+在 Terminal 執行以下指令（**必須使用 `source`**）：
+
+```bash
+source build.sh
+```
+
+# 執行效果展示
+
+彈出互動選單：
+
+```text
+==========================================
+      ROS 2 多專案自動建置部署選單        
+==========================================
+1) AMR_Project
+2) AGV_Project
+請選擇要建置的專案數字 (Ctrl+C 取消): 1
+```
+
+自動建置與載入：
+
+輸入 1 按 Enter，腳本自動拼接並執行指令：
+
+```bash
+colcon build --mixin-files colcon.mixin --mixin AMR_Project --metas colcon.amr.meta --cmake-force-configure
+```
+建置成功後自動執行 source install/setup.bash，印出初始化訊息並直接在當前 Shell 寫入 ROS_DOMAIN_ID=10！
