@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>pkg_amr_nav</name>
+  <version>0.0.1</version>
+  <description>AMR Navigation Package</description>
+  <maintainer email="dev@todo.todo">Dev</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

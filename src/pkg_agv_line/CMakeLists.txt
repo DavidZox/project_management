@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.8)
+project(pkg_agv_line)
+find_package(ament_cmake REQUIRED)
+message(STATUS ">>> [Build] Compiling AGV Line Tracking Package...")
+ament_package()

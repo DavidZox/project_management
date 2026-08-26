@@ -1,0 +1,6 @@
+names:
+  deploy_manager:
+    cmake-args:
+      - "-DDEPLOY_PROJECT_NAME=AGV_Project"
+      - "-DROS_DOMAIN_ID=20"
+      - "-DTARGET_SCRIPT=agv_init.sh"

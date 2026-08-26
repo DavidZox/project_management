@@ -1,0 +1,14 @@
+export DEPLOY_PROJECT_NAME="@DEPLOY_PROJECT_NAME@"
+export ROS_DOMAIN_ID="@ROS_DOMAIN_ID@"
+export TARGET_SCRIPT="@TARGET_SCRIPT@"
+
+if [ -n "$TARGET_SCRIPT" ]; then
+    _SCRIPT_PATH="$COLCON_CURRENT_PREFIX/share/deploy_manager/scripts/$TARGET_SCRIPT"
+    if [ -f "$_SCRIPT_PATH" ]; then
+        echo "=================================================="
+        echo "[Active Project] Name           : $DEPLOY_PROJECT_NAME"
+        echo "[Active Project] ROS_DOMAIN_ID  : $ROS_DOMAIN_ID"
+        echo "[Active Project] Running Script : $TARGET_SCRIPT"
+        bash "$_SCRIPT_PATH"
+    fi
+fi

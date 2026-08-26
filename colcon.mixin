@@ -1,0 +1,11 @@
+# ros2_ws/colcon.mixin
+build:
+  AMR_Project:
+    packages-select:
+      - pkg_amr_nav
+      - deploy_manager
+
+  AGV_Project:
+    packages-select:
+      - pkg_agv_line
+      - deploy_manager

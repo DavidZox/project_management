@@ -1,0 +1,6 @@
+names:
+  deploy_manager:
+    cmake-args:
+      - "-DDEPLOY_PROJECT_NAME=AMR_Project"
+      - "-DROS_DOMAIN_ID=10"
+      - "-DTARGET_SCRIPT=amr_init.sh"

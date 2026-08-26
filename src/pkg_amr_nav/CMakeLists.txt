@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.8)
+project(pkg_amr_nav)
+find_package(ament_cmake REQUIRED)
+message(STATUS ">>> [Build] Compiling AMR Navigation Package...")
+ament_package()
