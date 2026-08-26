@@ -26,8 +26,8 @@ ros2_ws/
         ├── env-hooks/
         │   └── project_hook.sh.in          # Environment Hook 範本檔
         └── scripts/
-            ├── amr_init.sh                 # AMR 硬體與雷達初始化腳本[cite: 7]
-            └── agv_init.sh                 # AGV 巡線感測器初始化腳本[cite: 6]
+            ├── amr_init.sh                 # AMR 硬體與雷達初始化腳本
+            └── agv_init.sh                 # AGV 巡線感測器初始化腳本
 ```
 
 ## 檔案職責說明
@@ -46,14 +46,14 @@ ros2_ws/
 
 ### 1. 切換與建置 AMR 專案 (自主移動機器人)
 
-只會編譯 `pkg_amr_nav` 與 `deploy_manager`[cite: 3]：
+只會編譯 `pkg_amr_nav` 與 `deploy_manager`：
 
 ```bash
 # 1. 執行建置 (指定 AMR Mixin 與 AMR Meta)
-colcon build --mixin-files colcon.mixin --mixin AMR_Project --metas colcon.amr.meta --cmake-force-configure[cite: 2, 3]
+colcon build --mixin-files colcon.mixin --mixin AMR_Project --metas colcon.amr.meta --cmake-force-configure
 
 # 2. 載入環境變數 (自動觸發 amr_init.sh)
-source install/setup.bash[cite: 8]
+source install/setup.bash
 
 # 3. 驗證環境變數
 echo $ROS_DOMAIN_ID
@@ -62,17 +62,17 @@ echo $ROS_DOMAIN_ID
 
 ### 2. 切換與建置 AGV 專案 (無人搬運車)
 
-只會編譯 pkg_agv_line 與 deploy_manager[cite: 3]：
+只會編譯 pkg_agv_line 與 deploy_manager：
 
 ```bash
 # 1. 清理舊環境
 rm -rf build/ install/ log/
 
 # 2. 執行建置 (指定 AGV Mixin 與 AGV Meta)
-colcon build --mixin-files colcon.mixin --mixin AGV_Project --metas colcon.agv.meta --cmake-force-configure[cite: 1, 3]
+colcon build --mixin-files colcon.mixin --mixin AGV_Project --metas colcon.agv.meta --cmake-force-configure
 
 # 3. 載入環境變數 (自動觸發 agv_init.sh)
-source install/setup.bash[cite: 8]
+source install/setup.bash
 
 # 4. 驗證環境變數
 echo $ROS_DOMAIN_ID
@@ -80,7 +80,7 @@ echo $ROS_DOMAIN_ID
 ```
 ### 載入環境輸出範例
 
-當執行 source install/setup.bash 時，Terminal 會自動印出目前專案資訊並執行對應初始化動作[cite: 8]：
+當執行 source install/setup.bash 時，Terminal 會自動印出目前專案資訊並執行對應初始化動作：
 
 ```text
 ==================================================
@@ -91,3 +91,15 @@ echo $ROS_DOMAIN_ID
 [SH Execution] Initializing AMR hardware & Lidar...
 --------------------------------------------------
 ```
+## 前置需求與套件安裝
+
+在開始使用本架構之前，請確保已安裝 ROS 2 環境，並執行以下指令安裝 `colcon-mixin` 擴充套件：
+
+```bash
+# 1. 更新 apt 軟體源並安裝 colcon-mixin 套件
+sudo apt-get update
+sudo apt-get install -y python3-colcon-mixin
+
+# 2. (選擇性) 初始化 colcon-mixin 預設庫
+colcon mixin add default [https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml](https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml) 2>/dev/null || true
+colcon mixin update
