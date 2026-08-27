@@ -1,4 +1,3 @@
-# ros2_ws/colcon.mixin
 build:
   AMR_Project:
     packages-select:
