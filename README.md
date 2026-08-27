@@ -208,6 +208,7 @@ jobs:
 
 # 多機型 Docker Image 自動化打包 (Docker Multi-Target)
 架構中的 colcon.*.meta 能直接傳入 Dockerfile 的 BUILD_ARG，讓您用同一份 Dockerfile 打出不同車型專屬的部署 Image。
+---
 
 ##　Dockerfile 範例 (Dockerfile)
 
@@ -236,7 +237,7 @@ CMD ["bash"]
 
 ---
 
-##　Dockerfile 範例 (Dockerfile)
+##　CI 中呼叫 Docker Build
 
 ```bash
 # 建置 AMR 專用映像檔
