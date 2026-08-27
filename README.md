@@ -256,7 +256,7 @@ docker build \
 
 ---
 
-##　發行 Debian 獨立安裝包 (.deb)
+發行 Debian 獨立安裝包 (.deb)
 
 若要在實體機器人（如 NVIDIA Jetson 或工業電腦）上進行無原始碼部署，可搭配 bloom 或 cpack 將建置產物打包成 Debian 套件。
 
@@ -266,19 +266,19 @@ docker build \
 
 ---
 
-##　專案層級的優勢
+專案層級的優勢
 
-### 1. 「一碼多用（Single Source of Truth）」架構
+# 1. 「一碼多用（Single Source of Truth）」架構
 在早期的機器人開發中，很多團隊會因為 AMR 和 AGV 硬體不同，直接在 Git 拉出 branch-amr 和 branch-agv 兩條分支，或者維護兩份 Workspace。這種做法到了後期維護會演变成災難（例如修補一個導航 Bug 要複製貼上到 5 個分支）。
 
 業界現行做法：主幹開發（Trunk-based development）。原始碼完全統一，硬體差異、功能模組與環境變數全靠 Build System（Colcon/CMake）的 Meta/Mixin 檔與外掛參數去定義。這也是為什麼這套架構能直接接入 Docker 與 CI/CD 矩陣編譯。
 
-###　2. 環境解耦與自動化 Setup Hook
+#　2. 環境解耦與自動化 Setup Hook
 機器人在現場（Field Deployment）最常遇到的低級錯誤就是「ROS_DOMAIN_ID 設錯導致通訊串流亂掉」或「硬體驅動沒載入」。
 
 業界現行做法：將環境初始化封裝進 Deploy Package（如您的 deploy_manager），透過 ament 的 environment_hooks 機制固化到 install/setup.bash。現場操作人員或系統開機服務（systemd）只需執行單一 source 指令，底層參數與腳本便自動生效，降成本且極度防呆。
 
-### 3. CI/CD 與容器化部署（DevOps for Robotics）
+# 3. CI/CD 與容器化部署（DevOps for Robotics）
 現代 AMR 廠商在工廠部署時，幾乎不再直接在車載電腦（如 NVIDIA Jetson 或工業電腦）上手動編譯原始碼，而是採用 Docker 容器 或 Debian 系統包（.deb） 部署。
 
 業界現行做法：正如前面展示的 CI/CD 流程，利用相同的代碼庫，在 GitHub Actions 或 Jenkins 帶入不同的 .meta 配置，幾分鐘內就能自動 build 出 AMR-v1.0.deb 或 AGV-v1.0.deb 產物，並推送到車載裝置進行 OTA 更新。
