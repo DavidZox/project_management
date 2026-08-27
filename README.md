@@ -142,3 +142,141 @@ source build.sh
 colcon build --mixin-files colcon.mixin --mixin AMR_Project --metas colcon.amr.meta --cmake-force-configure
 ```
 建置成功後自動執行 source install/setup.bash，印出初始化訊息並直接在當前 Shell 寫入 ROS_DOMAIN_ID=10！
+
+---
+
+# CI/CD 矩陣建置與測試 (Matrix Build & Test)
+利用 Git 儲存庫中的 colcon.mixin 與 colcon.*.meta，可以在 CI 流程中建立平行化的編譯與測試矩陣（Build Matrix）。
+
+###　GitHub Actions 範例交握邏輯 (.github/workflows/ci.yml)
+
+```yaml
+name: ROS 2 Multi-Project CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 定義專案矩陣，同時測試 AMR 與 AGV
+        include:
+          - project: "AMR_Project"
+            meta: "colcon.amr.meta"
+          - project: "AGV_Project"
+            meta: "colcon.agv.meta"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup ROS 2 Environment
+        uses: ros-tooling/setup-ros-action@v0.7
+        with:
+          required-ros-distributions: jazzy
+
+      - name: Install colcon-mixin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-colcon-mixin
+
+      # 1. 矩陣式編譯：精準帶入對應專案的 Mixin 與 Meta
+      - name: Colcon Build
+        run: |
+          colcon build \
+            --mixin-files colcon.mixin \
+            --mixin ${{ matrix.project }} \
+            --metas ${{ matrix.meta }} \
+            --cmake-force-configure
+
+      # 2. 自動化測試：只測試該專案包含的 Packages
+      - name: Colcon Test
+        run: |
+          colcon test \
+            --mixin-files colcon.mixin \
+            --mixin ${{ matrix.project }}
+
+      - name: Test Results Summary
+        run: colcon test-result --all
+```
+---
+
+# 多機型 Docker Image 自動化打包 (Docker Multi-Target)
+架構中的 colcon.*.meta 能直接傳入 Dockerfile 的 BUILD_ARG，讓您用同一份 Dockerfile 打出不同車型專屬的部署 Image。
+
+###　Dockerfile 範例 (Dockerfile)
+
+```Dockerfile
+FROM ros:jazzy-ros-base
+
+ARG PROJECT_NAME=AMR_Project
+ARG META_FILE=colcon.amr.meta
+
+WORKDIR /workspace
+COPY . /workspace/src/app
+
+# 安裝相依套件與編譯
+RUN apt-get update && apt-get install -y python3-colcon-mixin && \
+    cd /workspace/src/app && \
+    colcon build \
+      --mixin-files colcon.mixin \
+      --mixin ${PROJECT_NAME} \
+      --metas ${META_FILE} \
+      --cmake-force-configure
+
+# 自動將 source install/setup.bash 寫入 entrypoint
+ENTRYPOINT ["/bin/bash", "-c", "source /workspace/src/app/install/setup.bash && \"$@\"", "--"]
+CMD ["bash"]
+```
+
+---
+
+###　Dockerfile 範例 (Dockerfile)
+
+```bash
+# 建置 AMR 專用映像檔
+docker build \
+  --build-arg PROJECT_NAME=AMR_Project \
+  --build-arg META_FILE=colcon.amr.meta \
+  -t my-registry/amr-fleet:v1.0 .
+
+# 建置 AGV 專用映像檔
+docker build \
+  --build-arg PROJECT_NAME=AGV_Project \
+  --build-arg META_FILE=colcon.agv.meta \
+  -t my-registry/agv-fleet:v1.0 .
+```
+
+---
+
+###　發行 Debian 獨立安裝包 (.deb)
+
+若要在實體機器人（如 NVIDIA Jetson 或工業電腦）上進行無原始碼部署，可搭配 bloom 或 cpack 將建置產物打包成 Debian 套件。
+
+1. 變數固化：在 CI Pipeline 帶入 --metas colcon.amr.meta 編譯後，deploy_manager 生成的 project_hook.sh 會被直接打包進 .deb 的 /opt/ros/jazzy/share/deploy_manager/environment/ 目錄中。
+
+2. 現場部署：現場工程師在車載電腦執行 sudo dpkg -i ros-jazzy-deploy-manager_0.0.1_arm64.deb 後，只要 source /opt/ros/jazzy/setup.bash，終端機就會自動觸發 amr_init.sh 並將 ROS_DOMAIN_ID 設定為 10。
+
+---
+
+###　專案層級的優勢
+
+#### 1. 「一碼多用（Single Source of Truth）」架構
+在早期的機器人開發中，很多團隊會因為 AMR 和 AGV 硬體不同，直接在 Git 拉出 branch-amr 和 branch-agv 兩條分支，或者維護兩份 Workspace。這種做法到了後期維護會演变成災難（例如修補一個導航 Bug 要複製貼上到 5 個分支）。
+
+業界現行做法：主幹開發（Trunk-based development）。原始碼完全統一，硬體差異、功能模組與環境變數全靠 Build System（Colcon/CMake）的 Meta/Mixin 檔與外掛參數去定義。這也是為什麼這套架構能直接接入 Docker 與 CI/CD 矩陣編譯。
+
+####　2. 環境解耦與自動化 Setup Hook
+機器人在現場（Field Deployment）最常遇到的低級錯誤就是「ROS_DOMAIN_ID 設錯導致通訊串流亂掉」或「硬體驅動沒載入」。
+
+業界現行做法：將環境初始化封裝進 Deploy Package（如您的 deploy_manager），透過 ament 的 environment_hooks 機制固化到 install/setup.bash。現場操作人員或系統開機服務（systemd）只需執行單一 source 指令，底層參數與腳本便自動生效，降成本且極度防呆。
+
+#### 3. CI/CD 與容器化部署（DevOps for Robotics）
+現代 AMR 廠商在工廠部署時，幾乎不再直接在車載電腦（如 NVIDIA Jetson 或工業電腦）上手動編譯原始碼，而是採用 Docker 容器 或 Debian 系統包（.deb） 部署。
+
+業界現行做法：正如前面展示的 CI/CD 流程，利用相同的代碼庫，在 GitHub Actions 或 Jenkins 帶入不同的 .meta 配置，幾分鐘內就能自動 build 出 AMR-v1.0.deb 或 AGV-v1.0.deb 產物，並推送到車載裝置進行 OTA 更新。
