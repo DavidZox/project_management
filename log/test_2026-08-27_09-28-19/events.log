@@ -1,0 +1,6 @@
+[0.000000] (-) TimerEvent: {}
+[0.000775] (pkg_agv_line) JobQueued: {'identifier': 'pkg_agv_line', 'dependencies': OrderedDict({'pkg_agv_line': '/workspace/app/project_management/install/pkg_agv_line'})}
+[0.000896] (pkg_agv_line) JobStarted: {'identifier': 'pkg_agv_line'}
+[0.002712] (pkg_agv_line) StderrLine: {'line': b'Traceback (most recent call last):\n  File "/usr/lib/python3/dist-packages/colcon_core/executor/__init__.py", line 91, in __call__\n    rc = await self.task(*args, **kwargs)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/usr/lib/python3/dist-packages/colcon_core/task/__init__.py", line 120, in __call__\n    return await task_method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/usr/lib/python3/dist-packages/colcon_ros/task/ament_cmake/test.py", line 29, in test\n    return await extension.test()\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File "/usr/lib/python3/dist-packages/colcon_cmake/task/cmake/test.py", line 44, in test\n    assert os.path.exists(args.build_base), \\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Has this package been built before?\n'}
+[0.003370] (pkg_agv_line) JobEnded: {'identifier': 'pkg_agv_line', 'rc': 1}
+[0.013175] (-) EventReactorShutdown: {}
