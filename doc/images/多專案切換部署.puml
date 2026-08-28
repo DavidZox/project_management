@@ -1,0 +1,61 @@
+@startuml
+' --- 比例與樣式精準控制 ---
+skinparam RectangleWidthMax 300
+skinparam ranksep 60
+skinparam shadowing false
+skinparam defaultFontName "Microsoft JhengHei"
+
+title ROS 2 多專案切換部署架構 (Multi-Project Deployment Framework)
+
+rectangle N1 #E1D5E7 [
+  1. CLI 與選單觸發層 (CLI & Automation Script)
+  使用者執行一鍵腳本 (source build.sh) 或 CLI 指令
+  選擇要建置的目標專案 (如 AMR_Project / AGV_Project)
+]
+
+rectangle N2 #D1E5F0 [
+  2. 參數注入與套件篩選層 (Colcon Build System)
+  帶入 colcon.mixin 篩選指定編譯 Package 清單
+  帶入 colcon.*.meta 注入專案變數 (Name, Domain ID, Target Script)
+]
+
+rectangle N3 #F5F5F5 [
+  3. 部署管理與 Hook 生成層 (deploy_manager)
+  CMakeLists.txt 接收 Meta 參數並使用 configure_file
+  自動生成專屬 Environment Hook (project_hook.sh.in)
+]
+
+rectangle N4 #DAE8FE [
+  4. 環境載入與硬體初始化層 (Runtime Hook Execution)
+  執行 source install/setup.bash 自動觸發 Hook
+  自動寫入 ROS_DOMAIN_ID 並執行對應腳本 (amr_init.sh / agv_init.sh)
+]
+
+' --- 邏輯流向 ---
+N1 -down-> N2 : 傳遞專案名稱與 Meta/Mixin 檔名
+N2 -down-> N3 : 傳遞 CMake 變數 (DROS_DOMAIN_ID, DTARGET_SCRIPT)
+N3 -down-> N4 : 註冊 Hook 至 ROS 2 載入點
+
+' --- 交互機制 ---
+N4 .[#e74c3c,bold]left.> N1 : "無縫套用環境變數至當前 Terminal (ROS_DOMAIN_ID=10/20)"
+
+note right of N2
+  **一碼多用 (Single Source of Truth)：**
+  - colcon.mixin：劃分 Package 清單
+  - colcon.*.meta：定義硬體差異與 Domain ID
+  無需切換 Git 分支即可切換專案
+end note
+
+note right of N3
+  **環境解耦 (Environment Hook)：**
+  透過 project_hook.sh.in 範本
+  動態將專案初始化邏輯
+  固化至 ROS 2 預設 source 流程
+end note
+
+note bottom of N4
+  **自動化硬體初始化：**
+  - AMR 專案：設定 Domain ID=10 並初始化 Lidar 與硬體
+  - AGV 專案：設定 Domain ID=20 並初始化巡線感測器
+end note
+@enduml

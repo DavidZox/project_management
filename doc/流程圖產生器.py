@@ -8,69 +8,77 @@ def generate_puml_output(width=350, rank_sep=100):
     # 2. 定義 PlantUML 語法 (使用 f-string 控制比例)
     puml_syntax = """
 @startuml
-' --- 比例與樣式精準控制 ---
-skinparam RectangleWidthMax 300
-skinparam ranksep 60
+skinparam style strictuml
+skinparam sequenceMessageAlign center
 skinparam shadowing false
-skinparam defaultFontName "Microsoft JhengHei"
 
-title 1. 診斷系統基礎架構與分散式 Library 架構 (Diagnostics Architecture)
+actor "現場人員 / 開發者" as Operator
 
-rectangle N1 #E1D5E7 [
-  1. 功能節點層 (Functional Nodes Layer)
-  各功能 Node (Sensor / Motion / Nav)
-  引入對應的 Diagnostic Helper Lib (C++/Python)
-]
+box "CLI 與選單觸發層 (CLI & Script Layer)" #Lavender
+    participant "build.sh / Terminal" as Script
+end box
 
-rectangle N2 #D1E5F0 [
-  2. 診斷傳輸層 (Diagnostics Transport)
-  透過 diagnostic_updater API 發布
-  原始診斷訊息至 /diagnostics (DiagnosticArray)
-]
+box "Colcon 建置與參數注入層 (Build & Parameter Injection Layer)" #LightCyan
+    participant "colcon.mixin" as Mixin
+    participant "colcon.*.meta" as Meta
+    participant "colcon build" as Colcon
+end box
 
-rectangle N3 #F5F5F5 [
-  3. 診斷彙整與分層中心 (Aggregation Center)
-  diagnostic_aggregator 讀取 diagnostics_matchers.yaml
-  完成 Level 1~3 系統分層並發布至 /diagnostics_agg
-]
+box "部署管理與 Hook 生成層 (Deployment Management Layer)" #LightYellow
+    participant "deploy_manager (CMakeLists.txt)" as DeployMgr
+    participant "Environment Hook (project_hook.sh.in)" as EnvHook
+end box
 
-rectangle N4 #DAE8FE [
-  4. 監控與高階決策層 (Monitoring & Decision)
-  System Health Monitor 進行跨 Node 交叉診斷
-  根據故障等級觸發降級或硬體保護
-]
+box "環境載入與執行層 (Runtime Hook & Execution Layer)" #HoneyDew
+    participant "install/setup.bash" as SetupBash
+    participant "專案初始化腳本 (amr_init.sh / agv_init.sh)" as InitScript
+end box
 
-' --- 邏輯流向 ---
-N1 -down-> N2 : 非同步 Callback 觸發發布
-N2 -down-> N3 : 原始診斷資料匯流
-N3 -down-> N4 : 訂閱分層後的狀態資訊
+== 階段一：自動化建置與參數設定 ==
+Operator -> Script: 執行 source build.sh (選擇專案)
+activate Script
+Script -> Mixin: 載入套件篩選設定 (--mixin AMR_Project / AGV_Project)
+Script -> Meta: 帶入專案變數 (--metas colcon.amr.meta / colcon.agv.meta)
+Script -> Colcon: 觸發專案編譯指令
+activate Colcon
 
-' --- 交互機制 ---
-N4 .[#e74c3c,bold]left.> N1 : "降級/重試指令 (Task Agent) 或 硬體急停 (Safety PLC)"
+Colcon -> DeployMgr: 傳遞 CMake 變數 (DEPLOY_PROJECT_NAME, ROS_DOMAIN_ID, TARGET_SCRIPT)
+activate DeployMgr
+DeployMgr -> EnvHook: 使用 configure_file 生成環境 Hook
+DeployMgr -> Colcon: 註冊 Hook 至 ROS 2 載入點
+deactivate DeployMgr
 
-note right of N1
-  **非同步觸發機制：**
-  功能負責人於主程序 Include 模組
-  自行決定診斷門檻與觸發時機
-  最小化對業務邏輯的干擾
-end note
+Colcon --> Script: 完成專案與部署套件編譯
+deactivate Colcon
 
-note right of N3
-  **YAML 分層架構：**
-  依據 Level 1~3 劃分
-  如 /Hardware/Sensors
-  及 /Control/Motors
-end note
+== 階段二：環境載入與 Hook 自動觸發 ==
+Script -> SetupBash: 自動執行 source install/setup.bash
+activate SetupBash
+SetupBash -> EnvHook: 觸發生成的 Environment Hook
+activate EnvHook
 
-note bottom of N4
-  **分級處置機制：**
-  - rqt_robot_monitor 開發者視覺化
-  - 輕微故障：Task Agent 任務重試/降級
-  - 嚴重故障：Safety PLC 硬體急停 (E-Stop)
-end note
+EnvHook -> EnvHook: 自動寫入環境變數 (ROS_DOMAIN_ID=10/20)
+EnvHook -> InitScript: 呼叫對應的硬體初始化腳本 (amr_init.sh / agv_init.sh)
+activate InitScript
+InitScript -> InitScript: 執行硬體與感測器初始化作業
+InitScript --> EnvHook: 初始化完成
+deactivate InitScript
+
+EnvHook --> SetupBash: Hook 載入完成
+deactivate EnvHook
+
+SetupBash --> Script: 環境與變數升級完畢
+deactivate SetupBash
+
+== 階段三：環境資訊輸出與驗證 ==
+Script -> Operator: Terminal 印出專案名稱、ROS_DOMAIN_ID 與初始化執行結果
+deactivate Script
+
+Operator -> Operator: 執行 echo $ROS_DOMAIN_ID 驗證環境變數 (輸出: 10/20)
+
 @enduml
 """
-    file_base = "診斷機制框架圖"
+    file_base = "多專案切換部署交握圖"
 
     # --- 輸出 A: .puml 語法檔 ---
     try:
