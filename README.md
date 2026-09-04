@@ -39,6 +39,63 @@ ros2_ws/
             └── agv_init.sh                 # AGV 巡線感測器初始化腳本
 ```
 
+## colcon.mixin 內容
+
+```text
+build:
+  AMR_Project:
+    packages-select:
+      - pkg_amr_nav
+      - deploy_manager
+
+  AGV_Project:
+    packages-select:
+      - pkg_agv_line
+      - deploy_manager
+```
+
+## colcon.amr.meta 內容
+
+```text
+names:
+  deploy_manager:
+    cmake-args:
+      - "-DDEPLOY_PROJECT_NAME=AMR_Project"
+      - "-DROS_DOMAIN_ID=10"
+      - "-DTARGET_SCRIPT=amr_init.sh"
+```
+
+## colcon.agv.meta 內容
+
+```text
+names:
+  deploy_manager:
+    cmake-args:
+      - "-DDEPLOY_PROJECT_NAME=AGV_Project"
+      - "-DROS_DOMAIN_ID=20"
+      - "-DTARGET_SCRIPT=agv_init.sh"
+```
+
+## project_hook.sh.in 內容
+
+```text
+export DEPLOY_PROJECT_NAME="@DEPLOY_PROJECT_NAME@"
+export ROS_DOMAIN_ID="@ROS_DOMAIN_ID@"
+export TARGET_SCRIPT="@TARGET_SCRIPT@"
+
+if [ -n "$TARGET_SCRIPT" ]; then
+    _SCRIPT_PATH="$COLCON_CURRENT_PREFIX/share/deploy_manager/scripts/$TARGET_SCRIPT"
+    if [ -f "$_SCRIPT_PATH" ]; then
+        echo "=================================================="
+        echo "[Active Project] Name           : $DEPLOY_PROJECT_NAME"
+        echo "[Active Project] ROS_DOMAIN_ID  : $ROS_DOMAIN_ID"
+        echo "[Active Project] Running Script : $TARGET_SCRIPT"
+        bash "$_SCRIPT_PATH"
+    fi
+fi
+
+```
+
 ## 檔案職責說明
 
 | 檔案名稱 | 職責與說明 |
