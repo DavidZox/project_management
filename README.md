@@ -29,9 +29,9 @@ ros2_ws/
 ├── colcon.amr.meta                         # [Meta]  AMR 專案變數 (Domain ID: 10, Script: amr_init.sh)
 ├── colcon.agv.meta                         # [Meta]  AGV 專案變數 (Domain ID: 20, Script: agv_init.sh)
 └── src/
-    └── deploy_manager/                     # 部署管理套件[cite: 5]
+    └── deploy_manager/                     # 部署管理套件
         ├── CMakeLists.txt                  # 處理 Meta 參數輸入、生成 Hook 與安裝腳本
-        ├── package.xml                     # 套件描述檔[cite: 5]
+        ├── package.xml                     # 套件描述檔
         ├── env-hooks/
         │   └── project_hook.sh.in          # Environment Hook 範本檔
         └── scripts/
