@@ -25,7 +25,7 @@
 
 ```text
 ros2_ws/
-├── build.sh                                # [Build entrypoint] 專案選單, Package 編譯與環境變數設定等呼叫指令腳本 
+├── build.sh                                # [Build entrypoint] 專案選單, Package 編譯與環境變數設定指令腳本 
 ├── colcon.mixin                            # [Mixin] 定義專案對應要編譯的 Packages
 ├── colcon.amr.meta                         # [Meta]  AMR 專案變數 (Domain ID: 10, Script: amr_init.sh)
 ├── colcon.agv.meta                         # [Meta]  AGV 專案變數 (Domain ID: 20, Script: agv_init.sh)
