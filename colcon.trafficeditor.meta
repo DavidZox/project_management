@@ -1,0 +1,4 @@
+names:
+  deploy_manager:
+    cmake-args:
+      - "-DDEPLOY_PROJECT_NAME=TrafficEditor_Project"

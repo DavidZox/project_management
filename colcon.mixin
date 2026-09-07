@@ -8,3 +8,8 @@ build:
     packages-select:
       - pkg_agv_line
       - deploy_manager
+
+  TrafficEditor_Project:
+    packages-select:
+      - rmf_traffic_editor
+      - deploy_manager
