@@ -120,3 +120,41 @@ C++ 內部源碼（`param.h`）定義了以下數據型別代碼：
 
 > **解決方案**：在 GUI 中輸入長度時請帶上記號（如 `3.0`），或手動編輯 YAML 時確保 `distance` 後方的型別代碼固定為 **`3`**。
 
+---
+
+## 6.比例尺（Scale）同步運算與 GUI 視圖刷屏機制
+
+### 1. Scale 與 Measurement 欄位屬性解讀
+
+在 Traffic Editor 的 UI 介面中，上方樓層列表與下方屬性面板（Properties）為同步連動關係：
+
+* **Scale（公尺/像素）**：位於上方樓層表格（如 `t_1`），代表該樓層最終套用的繪圖比例尺。
+* **`length (m)`**：位於下方 Properties 面板，代表根據當前 Scale 算出該測量線段的物理長度（計算公式：$\text{像素距離} \times \text{當前 Scale}$）。
+* **`distance`**：位於下方 Properties 面板，代表使用者定義的真實公尺數（目標長度）。
+
+#### 雙向同步邏輯
+* **修改下方 `distance` $\rightarrow$ 連動上方 `Scale`**：
+  在下方輸入實際公尺數（例如 `3`）並按下 Enter 後，系統依據以下公式計算新比例尺：
+  $$\text{Scale (公尺/像素)} = \frac{\text{下方的 distance (公尺)}}{\text{測量線在圖片上的像素長度 (Pixels)}}$$
+* **修改上方 `Scale` $\rightarrow$ 連動下方 `length (m)`**：
+  點擊上方樓層右側的 `Edit...` 手動修改 `Scale` 時，下方的 `length (m)` 會隨之縮放改變。
+
+---
+
+### 2. GUI 視圖渲染延遲與重載機制
+
+在 GUI 中修改 `distance` 後，若上方 `Scale` 未即時變更，此為 Qt 視圖監聽未觸發的已知現象（Re-render Delay）。
+
+#### 延遲原因
+1. **數據已更新，UI 未重畫**：按下 Enter 時，記憶體數據已完成更新，但 Qt 介面的視圖刷新函式未被觸發。
+2. **檔案載入觸發重新計算**：重新載入專案時，Traffic Editor 會執行完整的初始化流程，讀取 `distance` 並調用內部 `recalculate_scale()` 函式，介面上才會顯示最新 `Scale`。
+
+#### 快速刷新技巧（無需重開程式）
+* **快捷鍵重新載入**：按下 `Ctrl + S` 儲存後，直接按下 `Ctrl + O` 重新開啟同一個 `.building.yaml` 檔案。
+* **切換樓層（Level Switch）**：若專案包含多個樓層，切換至其他 Level 再切換回原樓層，即可強制觸發繪圖參數與 Scale 的重新計算。
+
+---
+
+### 3. 校正驗證方式
+
+修改下方的 `distance` 並按下 Enter 鍵後（或完成快速刷新），檢查上方樓層列表中對應的 `Scale` 數值是否已隨之變動；數值更新即代表比例尺校正完成。
